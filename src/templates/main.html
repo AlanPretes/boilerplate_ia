@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Resultados{% endblock %}
+{% block title %}Resultados{% endblock %}
+
+{% block content %}
+<div class="table-responsive">
+    <table class="table text-center table-stripped">
+        <tr>
+            <th>Imagem</th>
+            <th>Data</th>
+            <th>Identificador</th>
+            <th>Produto</th>
+            <th>IAs</th>
+            <th class="plate-result">Placa</th>
+            <th class="plate-result">Resultado Placa</th>
+            <th class="plate-result">Match Placa</th>
+            <th>Runtime</th>
+        </tr>
+        <tbody>
+            {% for log in logs %}
+            <tr>
+                <td>
+                    <button 
+                        class="btn btn-primary btn-sm log-img"
+                        data-img-plate="{{ log.plate_thumb }}"
+                        data-result-plate="{{ log.result_plate }}" 
+                        data-match-plate="{{log.match_plate}}" 
+                        data-plate="{{ log.plate }}" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#modal-preview"
+                    >{% include 'icons/search.svg' %}</button>
+                </td>
+                <td style="white-space: nowrap;">{{ log.created_at_display }}</td>
+                <td>{{ log.identifier }}</td>
+                <td>{{ log.product }}</td>
+                <td style="white-space: nowrap;">{{ log.ias }}</td>
+                <td>{{ log.plate }}</td>
+                <td>{{ log.result_plate }}</td>
+                <td>{% if log.match_plate %}{% include 'icons/ok.svg' %}{% else %}{% include 'icons/nok.svg' %}{% endif %}</td>
+                <td>{{ log.runtime|round(2, 'floor') }}s</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% include 'components/pagination.html' %}
+
+<div class="modal fade" id="modal-preview" tabindex="-1" aria-labelledby="modal-previewLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="modal-previewLabel">
+                    Placa Original: <span id="expected-plate"></span> - 
+                    Leitura Placa: <span id="ia-result-plate"></span> - 
+                    Match Placa: <span id="ia-match-plate"></span>
+                    <br>
+                </h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <img src="..." class="d-block w-100" id="img-preview-plate">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const platePlaceholderImgSrc = "https://fakeimg.pl/600x300/e65959/faf0f0?text=Placa+não+localizada&font=bebas"
+        const imgPreviewPlate = document.getElementById("img-preview-plate")
+
+        document.querySelectorAll(".log-img").forEach(el => {
+            el.addEventListener("click", function () {
+                document.getElementById("expected-plate").innerHTML = el.dataset["plate"]
+                document.getElementById("ia-result-plate").innerHTML = el.dataset["resultPlate"]
+                document.getElementById("ia-match-plate").innerHTML = el.dataset["matchPlate"]
+
+                if (el.dataset["imgPlate"].trim().length) {
+                    imgPreviewPlate.src = el.dataset["imgPlate"]
+                } else {
+                    imgPreviewPlate.src = platePlaceholderImgSrc
+                }
+            })
+        })
+    })
+</script>
+
+{% endblock content %}

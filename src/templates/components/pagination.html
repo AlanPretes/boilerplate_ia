@@ -1,0 +1,19 @@
+<nav aria-label="Page navigation example">
+    <div class="text-center">
+        <ul class="pagination d-flex justify-content-center">
+            {% if prev %}
+                <li class="page-item"><a class="page-link" href="?page={{prev}}">Anterior</a></li>
+            {% else %}
+                <li class="page-item"><a class="page-link disabled">Anterior</a></li>
+            {% endif %}
+
+            
+            {% if next %}
+                <li class="page-item"><a class="page-link" href="?page={{next}}">Próxima</a></li>
+            {% else %}
+                <li class="page-item"><a class="page-link disabled">Próxima</a></li>
+            {% endif %}
+        </ul>
+        <p>Página {{page}} de {{pages}} - {{ total }} itens encontrados</p>
+    </div>
+</nav>

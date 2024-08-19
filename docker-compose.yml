@@ -1,0 +1,27 @@
+services:
+  ias_app:
+    container_name: ias_app
+    build: .
+    env_file: ./.env
+    restart: unless-stopped
+    entrypoint: sh ./docker-entrypoint.sh
+    ports:
+      - "8000"
+    networks:
+      - ias_network
+
+  ias_nginx:
+    image: nginx:latest
+    container_name: ias_nginx
+    restart: unless-stopped
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - ias_app
+    ports:
+      - "80:80"
+    networks:
+      - ias_network
+
+networks:
+  ias_network:
