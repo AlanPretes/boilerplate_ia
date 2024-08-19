@@ -129,35 +129,40 @@ class PlateRecognitionModel(BaseModel):
 
     def predict(self, image_path: str, thumbs, **kwargs):
         plate, thumb_top, thumb_bottom, product, labels_top, labels_bottom = None, None, None, None, [], []
-        
+
         def plate_rotation_or_not(product, image):
             height_70_percent = int(0.70 * image.shape[0])
             width_50_percent = int(0.50 * image.shape[0])
-            
-            # Processa a parte superior da imagem (70%)
-            top_results_letras_placa = self.model_letters(image[:height_70_percent])
-            top_labels = get_plate(top_results_letras_placa, image[:height_70_percent], product, "top")
-            
-            # Processa a parte inferior da imagem (50%)
-            bottom_results_letras_placa = self.model_letters(image[width_50_percent:])
-            bottom_labels = get_plate(bottom_results_letras_placa, image[width_50_percent:], product, "bottom")
-            
-            # Combina os resultados para formar a placa completa
-            plate = top_labels['plate'] + bottom_labels['plate']
 
-            return plate, top_labels['labels'], bottom_labels['labels']
+            # Processamento específico para motos
+            if product in ['New Moto', 'Old Moto']:
+                # Processa a parte superior da imagem (70%)
+                top_results_letras_placa = self.model_letters(image[:height_70_percent])
+                top_labels = get_plate(top_results_letras_placa, image[:height_70_percent], product, "top")
+
+                # Processa a parte inferior da imagem (50%)
+                bottom_results_letras_placa = self.model_letters(image[width_50_percent:])
+                bottom_labels = get_plate(bottom_results_letras_placa, image[width_50_percent:], product, "bottom")
+
+                # Combina os resultados para formar a placa completa
+                plate = top_labels['plate'] + bottom_labels['plate']
+
+            else:  # Processamento para carros
+                # Para carros, processa a imagem inteira
+                full_results_letras_placa = self.model_letters(image)
+                full_labels = get_plate(full_results_letras_placa, image, product, "full")
+
+                plate = full_labels['plate']
+
+            return plate, top_labels['labels'] if "Moto" in product else [], bottom_labels['labels'] if "Moto" in product else []
 
         def get_plate(results_letras_placa, image, product, local) -> dict:
             labels = []
-            if product == 'New Moto':
-                min_height_percent = 40
-                
-            elif product == 'Old Moto':
-                min_height_percent = 40
-                
+            if product in ['New Moto', 'Old Moto']:
+                min_height_percent = 45
             else:
                 min_height_percent = 50
-                
+            
             results_letras_placa = results_letras_placa[0]
             image_height, image_width = image.shape[:2]
             detections = []
@@ -166,14 +171,12 @@ class PlateRecognitionModel(BaseModel):
             for box, cls, conf in iterator:
                 class_name = results_letras_placa.names[int(cls)]
                 x1, y1, x2, y2 = map(int, box)
-                
+
                 height = y2 - y1
                 height_percent = (height / image_height) * 100
-                
+
                 if height_percent >= min_height_percent:
                     detections.append((class_name, (x1 + x2) / 2, x1, y1, x2, y2))
-                    # image = plot_boxes(image, box, class_name)
-                    
                     # Salva as coordenadas no formato YOLO: [class, x_center, y_center, width, height]
                     x_center = ((x1 + x2) / 2) / image_width
                     y_center = ((y1 + y2) / 2) / image_height
@@ -181,10 +184,10 @@ class PlateRecognitionModel(BaseModel):
                     height = (y2 - y1) / image_height
                     labels.append([int(cls), x_center, y_center, width, height])
 
-            ordered_detections_by_x = sorted(detections, key=lambda x: x[1])  
+            ordered_detections_by_x = sorted(detections, key=lambda x: x[1])
             digits = [str(int(c[0])) if c[0].isnumeric() else c[0] for c in ordered_detections_by_x]
             plate = ''.join(digits)
-            
+
             return {'plate': plate, 'labels': labels}
 
         try:
@@ -194,20 +197,26 @@ class PlateRecognitionModel(BaseModel):
             plate = self.transform_plate(plate, product)
             
             if thumbs:
-                thumb_top = converto_image_to_b64(image[:int(0.70 * image.shape[0])])  # Parte superior
-                thumb_bottom = converto_image_to_b64(image[int(0.50 * image.shape[0]):])  # Parte inferior
-            
+                if "Moto" in product:
+                    # Para motos, crie duas miniaturas
+                    thumb_top = converto_image_to_b64(image[:int(0.70 * image.shape[0])])  # Parte superior
+                    thumb_bottom = converto_image_to_b64(image[int(0.50 * image.shape[0]):])  # Parte inferior
+                else:
+                    # Para carros, crie uma única miniatura da imagem completa
+                    thumb_top = converto_image_to_b64(image)  # Imagem completa
+
         except Exception as exc:
+            product = "Produto não reconhecido"
             print("Falha ao ler placa::::: ", exc)
-            
+
         finally:
             return {
                 "result": plate or "Placa não reconhecida",
                 "thumb_top": thumb_top,
-                "thumb_bottom": thumb_bottom,
+                "thumb_bottom": thumb_bottom if "Moto" in product else None,
                 "product": product,
-                "labels_top": labels_top,  # Retorna as coordenadas da parte superior
-                "labels_bottom": labels_bottom  # Retorna as coordenadas da parte inferior
+                "labels_top": labels_top if "Moto" in product else None,  # Retorna as coordenadas da parte superior para motos
+                "labels_bottom": labels_bottom if "Moto" in product else None  # Retorna as coordenadas da parte inferior para motos
             }
         
     @classmethod

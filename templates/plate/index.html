@@ -21,8 +21,8 @@
                 <td>
                     <button 
                         class="btn btn-primary btn-sm log-img"
-                        data-img-top="{{ log.img_top.url }}"
-                        data-img-bottom="{{ log.img_bottom.url }}"
+                        data-img-top="{% if log.img_top %}{{ log.img_top.url }}{% else %}https://fakeimg.pl/600x300/e65959/faf0f0?text=Imagem+Top+não+localizada&font=bebas{% endif %}"
+                        data-img-bottom="{% if log.img_bottom %}{{ log.img_bottom.url }}{% else %}https://fakeimg.pl/600x300/e65959/faf0f0?text=Imagem+Bottom+não+localizada&font=bebas{% endif %}"
                         data-result-plate="{{ log.result }}" 
                         data-match-plate="{{ log.match }}" 
                         data-plate="{{ log.plate }}" 

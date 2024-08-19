@@ -52,15 +52,28 @@ def new(request):
         # Faz a predição usando o caminho da imagem salva
         result = plate_recognition_model.predict(image_path, thumbs=thumbs)
 
+        if result.get('product') == 'Produto não reconhecido' or result.get('result') == 'Placa não reconhecida':
+            # Determina o caminho de salvamento na pasta 'nao_reconhecido'
+            save_directory = 'nao_reconhecido/'
+            os.makedirs(save_directory, exist_ok=True)  # Cria o diretório se não existir
+
+            # Reabre o arquivo para leitura e salva na pasta 'nao_reconhecido'
+            file.seek(0)  # Garante que o ponteiro do arquivo esteja no início
+            unrecognized_image_name = os.path.join(save_directory, f"{identifier}.jpg")
+            with open(unrecognized_image_name, 'wb') as f:
+                f.write(file.read())
+
+            
+
         # Salva as imagens `thumb_top` e `thumb_bottom`
         if result.get('thumb_top'):
             thumb_top_data = base64.b64decode(result['thumb_top'])
-            thumb_top_name = f"{identifier}_top.png"
+            thumb_top_name = os.path.join(save_directory, f"{identifier}_top.jpg")
             new_plate.img_top.save(thumb_top_name, ContentFile(thumb_top_data))
 
         if result.get('thumb_bottom'):
             thumb_bottom_data = base64.b64decode(result['thumb_bottom'])
-            thumb_bottom_name = f"{identifier}_bottom.png"
+            thumb_bottom_name = os.path.join(save_directory, f"{identifier}_bottom.jpg")
             new_plate.img_bottom.save(thumb_bottom_name, ContentFile(thumb_bottom_data))
 
         # Associa o resultado ao modelo PlateModel
@@ -97,25 +110,31 @@ def generate_yolo_txt(plate_model, label_type):
 def download_yolo_txt(request):
     # Crie um diretório temporário para armazenar os arquivos txt e as imagens
     with tempfile.TemporaryDirectory() as temp_dir:
-        images_dir = os.path.join(temp_dir, 'images')
-        labels_dir = os.path.join(temp_dir, 'labels')
-
-        os.makedirs(images_dir, exist_ok=True)
-        os.makedirs(labels_dir, exist_ok=True)
-
         try:
+            # Diretório para imagens não reconhecidas
+            unrecognized_dir = os.path.join(temp_dir, 'nao_reconhecido')
+            os.makedirs(unrecognized_dir, exist_ok=True)
+
             # Filtre os itens que deram "Match"
-            matched_plates = PlateModel.objects.filter(match=True)
+            matched_plates = PlateModel.objects.all()
             
             for plate in matched_plates:
+                # Crie diretórios específicos para cada tipo de produto
+                product_dir = os.path.join(temp_dir, plate.product)
+                images_dir = os.path.join(product_dir, 'images')
+                labels_dir = os.path.join(product_dir, 'labels')
+
+                os.makedirs(images_dir, exist_ok=True)
+                os.makedirs(labels_dir, exist_ok=True)
+
                 # Salvar as imagens top e bottom na pasta images
                 if plate.img_top:
-                    img_top_path = os.path.join(images_dir, f"{plate.identifier}_top.png")
+                    img_top_path = os.path.join(images_dir, f"{plate.identifier}_top.jpg")
                     with open(img_top_path, "wb") as img_file:
                         img_file.write(plate.img_top.read())
 
                 if plate.img_bottom:
-                    img_bottom_path = os.path.join(images_dir, f"{plate.identifier}_bottom.png")
+                    img_bottom_path = os.path.join(images_dir, f"{plate.identifier}_bottom.jpg")
                     with open(img_bottom_path, "wb") as img_file:
                         img_file.write(plate.img_bottom.read())
 
@@ -136,22 +155,23 @@ def download_yolo_txt(request):
                     with open(txt_bottom_filepath, "w") as txt_file:
                         txt_file.write(txt_bottom_content)
 
-            # Crie um arquivo .zip contendo as pastas images e labels
+                # Se o produto não foi reconhecido, salve as imagens na pasta 'nao_reconhecido'
+                if plate.product == 'Produto não reconhecido' or plate.result == 'Placa não reconhecida':
+                    unrecognized_image_path = os.path.join(unrecognized_dir, f"{plate.identifier}.jpg")
+                    with open(unrecognized_image_path, 'wb') as img_file:
+                        img_file.write(plate.plate_image.read())
+            
+            # Crie um arquivo .zip contendo as pastas organizadas por tipo de produto
             zip_filename = "yolo_files.zip"
             zip_filepath = os.path.join(temp_dir, zip_filename)
 
             with zipfile.ZipFile(zip_filepath, 'w') as zip_file:
-                # Adicionar arquivos da pasta images ao zip
-                for root, dirs, files in os.walk(images_dir):
+                # Adicionar arquivos das pastas específicas ao zip
+                for root, dirs, files in os.walk(temp_dir):
                     for file in files:
-                        arcname = os.path.relpath(os.path.join(root, file), temp_dir)
-                        zip_file.write(os.path.join(root, file), arcname=arcname)
-
-                # Adicionar arquivos da pasta labels ao zip
-                for root, dirs, files in os.walk(labels_dir):
-                    for file in files:
-                        arcname = os.path.relpath(os.path.join(root, file), temp_dir)
-                        zip_file.write(os.path.join(root, file), arcname=arcname)
+                        if file != zip_filename:  # Evitar adicionar o próprio zip ao zip
+                            arcname = os.path.relpath(os.path.join(root, file), temp_dir)
+                            zip_file.write(os.path.join(root, file), arcname=arcname)
 
             # Envie o arquivo .zip como resposta para download
             with open(zip_filepath, 'rb') as zip_file:
