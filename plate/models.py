@@ -7,7 +7,7 @@ def upload_to_plate(instance, filename):
     # Define o nome do arquivo como o valor de 'identifier' com a extensão original
     filename = f"{instance.identifier}.{ext}"
     # Retorna o caminho completo onde o arquivo será salvo
-    return os.path.join('images/plates/', filename)
+    return os.path.join('images/plates/complete', filename)
 
 def upload_to_img_top(instance, filename):
     # Extrai a extensão do arquivo
