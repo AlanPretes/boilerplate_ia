@@ -10,7 +10,7 @@ RUN groupadd -r ias_group && useradd -r -g ias_group ias_user
 
 WORKDIR /app
 
-COPY requirements.txt ./
+COPY requirements.txt ./boilerplate_ia
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .

@@ -1,10 +1,10 @@
 services:
   ias_app:
     container_name: ias_app
-    build: .
+    build: ./boilerplate_ia
     env_file: ./.env
     restart: unless-stopped
-    entrypoint: sh ./docker-entrypoint.sh
+    entrypoint: sh ./boilerplate_ia/docker-entrypoint.sh
     ports:
       - "8000"
     networks:
@@ -15,7 +15,7 @@ services:
     container_name: ias_nginx
     restart: unless-stopped
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./boilerplate_ia/nginx/nginx.conf:/etc/nginx/nginx.conf
     depends_on:
       - ias_app
     ports:
