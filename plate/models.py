@@ -32,11 +32,11 @@ class PlateModel(models.Model):
     result = models.JSONField(null=True, blank=True)
     labels_top = models.JSONField(null=True, blank=True)
     labels_bottom = models.JSONField(null=True, blank=True)
-    img_top = models.ImageField(upload_to=upload_to_img_top, null=True, blank=True)  # Usando a função 'upload_to_img_top'
-    img_bottom = models.ImageField(upload_to=upload_to_img_bottom, null=True, blank=True)  # Usando a função 'upload_to_img_bottom'
+    plate_image = models.ImageField(upload_to='images/plates/complete', max_length=255)
+    img_top = models.ImageField(upload_to='images/plates/top', max_length=255, null=True, blank=True)
+    img_bottom = models.ImageField(upload_to='images/plates/bottom', max_length=255, null=True, blank=True)
     match = models.BooleanField(default=False)
     runtime = models.FloatField(default=0.0)
-    plate_image = models.ImageField(upload_to=upload_to_plate, null=True, blank=True)  # Usando a função 'upload_to_plate'
 
     def __str__(self):
         return f'Log {self.identifier} for product {self.product}'
