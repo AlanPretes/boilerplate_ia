@@ -1,0 +1,47 @@
+{% extends 'plate/base.html' %}
+
+{% block page_title %}Resultados{% endblock %}
+{% block title %}Resultados{% endblock %}
+
+{% block content %}
+<div class="table-responsive">
+    <table class="table text-center table-striped">
+        <thead>
+            <tr>
+                <th>Produto</th>
+                <th>Total de Match</th>
+                <th>Total de No Match</th>
+                <th>Accuracy (%)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>New Moto</td>
+                <td>{{ new_moto_match_count }}</td>
+                <td>{{ new_moto_no_match_count }}</td>
+                <td>{{ new_moto_accuracy|floatformat:2 }}%</td>
+            </tr>
+            <tr>
+                <td>Old Moto</td>
+                <td>{{ old_moto_match_count }}</td>
+                <td>{{ old_moto_no_match_count }}</td>
+                <td>{{ old_moto_accuracy|floatformat:2 }}%</td>
+            </tr>
+            <tr>
+                <td>New Car</td>
+                <td>{{ new_car_match_count }}</td>
+                <td>{{ new_car_no_match_count }}</td>
+                <td>{{ new_car_accuracy|floatformat:2 }}%</td>
+            </tr>
+            <tr>
+                <td>Old Car</td>
+                <td>{{ old_car_match_count }}</td>
+                <td>{{ old_car_no_match_count }}</td>
+                <td>{{ old_car_accuracy|floatformat:2 }}%</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+
+{% endblock content %}

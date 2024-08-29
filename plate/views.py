@@ -18,6 +18,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
+from django.db.models import Count, Sum
 
 
 @login_required
@@ -73,21 +74,21 @@ def new(request):
 
                 # Reabre o arquivo para leitura e salva na pasta 'nao_reconhecido'
                 file.seek(0)  # Garante que o ponteiro do arquivo esteja no início
-                unrecognized_image_name = os.path.join(save_directory, f"{identifier}_{file.name}")
+                unrecognized_image_name = os.path.join(save_directory, f"{identifier}_{plate}")
                 with open(unrecognized_image_name, 'wb') as f:
                     f.write(file.read())
 
             # Salva as imagens `thumb_top` e `thumb_bottom`
             if result.get('thumb_top'):
-                save_directory = './media/images/plates/top'
+                save_directory = './'
                 thumb_top_data = base64.b64decode(result['thumb_top'])
-                thumb_top_name = os.path.join(save_directory, f"{identifier}_{file.name}_top.jpg")
+                thumb_top_name = os.path.join(save_directory, f"TOP_{identifier}_{plate}.jpg")
                 new_plate.img_top.save(thumb_top_name, ContentFile(thumb_top_data))
 
             if result.get('thumb_bottom'):
-                save_directory = './media/images/plates/bottom'
+                save_directory = './'
                 thumb_bottom_data = base64.b64decode(result['thumb_bottom'])
-                thumb_bottom_name = os.path.join(save_directory, f"{identifier}_{file.name}_bottom.jpg")
+                thumb_bottom_name = os.path.join(save_directory, f"BOTTOM_{identifier}_{plate}.jpg")
                 new_plate.img_bottom.save(thumb_bottom_name, ContentFile(thumb_bottom_data))
 
             # Associa o resultado ao modelo PlateModel
@@ -249,20 +250,20 @@ def new_plate_api(request):
     if result.get('product') == 'Produto não reconhecido' or result.get('result') == 'Placa não reconhecida':
         save_directory = 'nao_reconhecido/'
         os.makedirs(save_directory, exist_ok=True)
-        unrecognized_image_name = os.path.join(save_directory, f"{identifier}_{image_name}")
+        unrecognized_image_name = os.path.join(save_directory, f"{identifier}_{plate}.jpg")
         with open(unrecognized_image_name, 'wb') as f:
             f.write(image_file.read())
 
     if result.get('thumb_top'):
         save_directory = './'
         thumb_top_data = base64.b64decode(result['thumb_top'])
-        thumb_top_name = os.path.join(save_directory, f"TOP_{identifier}_{image_name}")
+        thumb_top_name = os.path.join(save_directory, f"TOP_{identifier}_{plate}.jpg")
         new_plate.img_top.save(thumb_top_name, ContentFile(thumb_top_data))
 
     if result.get('thumb_bottom'):
         save_directory = './'
         thumb_bottom_data = base64.b64decode(result['thumb_bottom'])
-        thumb_bottom_name = os.path.join(save_directory, f"BOTTOM_{identifier}_{image_name}_bottom.jpg")
+        thumb_bottom_name = os.path.join(save_directory, f"BOTTOM_{identifier}_{plate}.jpg")
         new_plate.img_bottom.save(thumb_bottom_name, ContentFile(thumb_bottom_data))
 
     new_plate.product = result.get('product', 'Produto Desconhecido')
@@ -286,3 +287,49 @@ def new_plate_api(request):
     }
 
     return Response(response_data, status=status.HTTP_201_CREATED)
+
+
+@login_required
+def resultados_view(request):
+    # New Moto
+    new_moto_match_count = PlateModel.objects.filter(match=True, product="New Moto").count()
+    new_moto_no_match_count = PlateModel.objects.filter(match=False, product="New Moto").count()
+    new_moto_total = new_moto_match_count + new_moto_no_match_count
+    new_moto_accuracy = (new_moto_match_count / new_moto_total) * 100 if new_moto_total > 0 else 0
+
+    # Old Moto
+    old_moto_match_count = PlateModel.objects.filter(match=True, product="Old Moto").count()
+    old_moto_no_match_count = PlateModel.objects.filter(match=False, product="Old Moto").count()
+    old_moto_total = old_moto_match_count + old_moto_no_match_count
+    old_moto_accuracy = (old_moto_match_count / old_moto_total) * 100 if old_moto_total > 0 else 0
+
+    # New Car
+    new_car_match_count = PlateModel.objects.filter(match=True, product="New Car").count()
+    new_car_no_match_count = PlateModel.objects.filter(match=False, product="New Car").count()
+    new_car_total = new_car_match_count + new_car_no_match_count
+    new_car_accuracy = (new_car_match_count / new_car_total) * 100 if new_car_total > 0 else 0
+
+    # Old Car
+    old_car_match_count = PlateModel.objects.filter(match=True, product="Old Car").count()
+    old_car_no_match_count = PlateModel.objects.filter(match=False, product="Old Car").count()
+    old_car_total = old_car_match_count + old_car_no_match_count
+    old_car_accuracy = (old_car_match_count / old_car_total) * 100 if old_car_total > 0 else 0
+
+    context = {
+        'new_moto_match_count': new_moto_match_count,
+        'new_moto_no_match_count': new_moto_no_match_count,
+        'new_moto_accuracy': new_moto_accuracy,
+
+        'old_moto_match_count': old_moto_match_count,
+        'old_moto_no_match_count': old_moto_no_match_count,
+        'old_moto_accuracy': old_moto_accuracy,
+
+        'new_car_match_count': new_car_match_count,
+        'new_car_no_match_count': new_car_no_match_count,
+        'new_car_accuracy': new_car_accuracy,
+
+        'old_car_match_count': old_car_match_count,
+        'old_car_no_match_count': old_car_no_match_count,
+        'old_car_accuracy': old_car_accuracy,
+    }
+    return render(request, 'plate/resultados.html', context)
