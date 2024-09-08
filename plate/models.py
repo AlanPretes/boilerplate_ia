@@ -27,6 +27,8 @@ def upload_to_img_bottom(instance, filename):
 
 class PlateModel(models.Model):
     identifier = models.CharField(max_length=255, null=False)
+    type_vehicle = models.CharField(max_length=255, null=False)
+    angle = models.CharField(max_length=255, null=False)
     product = models.CharField(max_length=255, null=False)
     plate = models.CharField(max_length=255, null=False)
     result = models.JSONField(null=True, blank=True)

@@ -64,10 +64,52 @@ class BaseModel(ABC):
 
 
 class PlateRecognitionModel(BaseModel):
-    def __init__(self, model_crop, model_letters):
-        self.model_crop = model_crop
-        self.model_letters = model_letters
+    def __init__(self, model_type_vehicle, model_angle_car, model_crop_moto, model_crop_car,
+        model_letters_new_moto, model_letters_old_moto,
+        model_letters_old_car_0_180, model_letters_new_car_0_180,
+        model_letters_old_car_45_225, model_letters_new_car_45_225,
+        model_letters_old_car_135_315, model_letters_new_car_135_315):
+    
+        self.model_type_vehicle = model_type_vehicle
+        self.model_angle_car = model_angle_car
+        self.model_crop_moto = model_crop_moto
+        self.model_crop_car = model_crop_car
+        self.model_letters_new_moto = model_letters_new_moto
+        self.model_letters_old_moto = model_letters_old_moto
+        self.model_letters_old_car_0_180 = model_letters_old_car_0_180
+        self.model_letters_new_car_0_180 = model_letters_new_car_0_180
+        self.model_letters_old_car_45_225 = model_letters_old_car_45_225
+        self.model_letters_new_car_45_225 = model_letters_new_car_45_225
+        self.model_letters_old_car_135_315 = model_letters_old_car_135_315
+        self.model_letters_new_car_135_315 = model_letters_new_car_135_315
+        
+    def type_vehicles(self, img_path, results):
+        img = cv2.imread(img_path)
+        
+        # Variáveis para armazenar o maior veículo detectado (carro ou moto)
+        largest_area = 0
+        vehicle_type = None
 
+        # Iterar sobre os resultados para encontrar o maior carro ou moto
+        for result in results:
+            for bbox in result.boxes:
+                if bbox.cls in [2, 3]:  # Classe 2 para "car" e classe 3 para "motorcycle" no dataset COCO
+                    # Obter coordenadas da caixa delimitadora
+                    x1, y1, x2, y2 = bbox.xyxy[0].cpu().numpy()
+                    # Calcular a área da caixa
+                    box_area = (x2 - x1) * (y2 - y1)
+
+                    # Verificar se essa caixa é a maior até agora
+                    if box_area > largest_area:
+                        largest_area = box_area
+                        vehicle_type = "car" if bbox.cls == 2 else "motorcycle"
+
+            return vehicle_type
+        else:
+            return "Nenhum veículo foi detectado"
+
+
+    
     def get_closest_items(self, img_path, results):
         def euclidean_distance(x1, y1, x2, y2):
             return np.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
@@ -130,31 +172,101 @@ class PlateRecognitionModel(BaseModel):
     def predict(self, image_path: str, thumbs, **kwargs):
         plate, thumb_top, thumb_bottom, product, labels_top, labels_bottom = None, None, None, None, [], []
 
-        def plate_rotation_or_not(product, image):
+        class_name = "Não aplicável"
+        
+        def plate_old_car_0_180(product, image):
+            top_results_letras_placa = self.model_letters_old_car_0_180(image)
+            top_labels = get_plate(top_results_letras_placa, image, product, "top")
+            bottom_labels = None
+
+            # Combina os resultados para formar a placa completa
+            plate = top_labels['plate']
+
+            return plate, top_labels['labels'], bottom_labels
+        
+        def plate_new_car_0_180(product, image):
+            top_results_letras_placa = self.model_letters_old_car_0_180(image)
+            top_labels = get_plate(top_results_letras_placa, image, product, "top")
+            bottom_labels = None
+
+            # Combina os resultados para formar a placa completa
+            plate = top_labels['plate']
+
+            return plate, top_labels['labels'], bottom_labels
+        
+        def plate_old_car_45_225(product, image):
+            top_results_letras_placa = self.model_letters_old_car_45_225(image)
+            top_labels = get_plate(top_results_letras_placa, image, product, "top")
+            bottom_labels = None
+
+            # Combina os resultados para formar a placa completa
+            plate = top_labels['plate']
+
+            return plate, top_labels['labels'], bottom_labels
+        
+        def plate_new_car_45_225(product, image):
+            top_results_letras_placa = self.model_letters_new_car_45_225(image)
+            top_labels = get_plate(top_results_letras_placa, image, product, "top")
+            bottom_labels = None
+
+            # Combina os resultados para formar a placa completa
+            plate = top_labels['plate']
+
+            return plate, top_labels['labels'], bottom_labels
+        
+        def plate_old_car_135_315(product, image):
+            top_results_letras_placa = self.model_letters_old_car_135_315(image)
+            top_labels = get_plate(top_results_letras_placa, image, product, "top")
+            bottom_labels = None
+
+            # Combina os resultados para formar a placa completa
+            plate = top_labels['plate']
+
+            return plate, top_labels['labels'], bottom_labels
+        
+        def plate_new_car_135_315(product, image):
+            top_results_letras_placa = self.model_letters_new_car_135_315(image)
+            top_labels = get_plate(top_results_letras_placa, image, product, "top")
+            bottom_labels = None
+
+            # Combina os resultados para formar a placa completa
+            plate = top_labels['plate']
+
+            return plate, top_labels['labels'], bottom_labels
+        
+        def plate_rotation_or_not_new_moto(product, image):
             height_70_percent = int(0.70 * image.shape[0])
             width_50_percent = int(0.50 * image.shape[0])
 
-            # Processamento específico para motos
-            if product in ['New Moto', 'Old Moto']:
-                # Processa a parte superior da imagem (70%)
-                top_results_letras_placa = self.model_letters(image[:height_70_percent])
-                top_labels = get_plate(top_results_letras_placa, image[:height_70_percent], product, "top")
+            # Processa a parte superior da imagem (70%)
+            top_results_letras_placa = self.model_letters_new_moto(image[:height_70_percent])
+            top_labels = get_plate(top_results_letras_placa, image[:height_70_percent], product, "top")
 
-                # Processa a parte inferior da imagem (50%)
-                bottom_results_letras_placa = self.model_letters(image[width_50_percent:])
-                bottom_labels = get_plate(bottom_results_letras_placa, image[width_50_percent:], product, "bottom")
+            # Processa a parte inferior da imagem (50%)
+            bottom_results_letras_placa = self.model_letters_new_moto(image[width_50_percent:])
+            bottom_labels = get_plate(bottom_results_letras_placa, image[width_50_percent:], product, "bottom")
 
-                # Combina os resultados para formar a placa completa
-                plate = top_labels['plate'] + bottom_labels['plate']
+            # Combina os resultados para formar a placa completa
+            plate = top_labels['plate'] + bottom_labels['plate']
 
-            else:  # Processamento para carros
-                # Para carros, processa a imagem inteira
-                full_results_letras_placa = self.model_letters(image)
-                full_labels = get_plate(full_results_letras_placa, image, product, "full")
+            return plate, top_labels['labels'], bottom_labels['labels']
+        
+        def plate_rotation_or_not_old_moto(product, image):
+            height_70_percent = int(0.70 * image.shape[0])
+            width_50_percent = int(0.50 * image.shape[0])
 
-                plate = full_labels['plate']
+            # Processa a parte superior da imagem (70%)
+            top_results_letras_placa = self.model_letters_old_moto(image[:height_70_percent])
+            top_labels = get_plate(top_results_letras_placa, image[:height_70_percent], product, "top")
 
-            return plate, top_labels['labels'] if "Moto" in product else [], bottom_labels['labels'] if "Moto" in product else []
+            # Processa a parte inferior da imagem (50%)
+            bottom_results_letras_placa = self.model_letters_old_moto(image[width_50_percent:])
+            bottom_labels = get_plate(bottom_results_letras_placa, image[width_50_percent:], product, "bottom")
+
+            # Combina os resultados para formar a placa completa
+            plate = top_labels['plate'] + bottom_labels['plate']
+
+            return plate, top_labels['labels'], bottom_labels['labels']
 
         def get_plate(results_letras_placa, image, product, local) -> dict:
             labels = []
@@ -191,10 +303,57 @@ class PlateRecognitionModel(BaseModel):
             return {'plate': plate, 'labels': labels}
 
         try:
-            results_recorte_placa = self.model_crop(image_path)
-            image, product = self.get_closest_items(image_path, results_recorte_placa)
-            plate, labels_top, labels_bottom = plate_rotation_or_not(product, image)
-            plate = self.transform_plate(plate, product)
+            type_vehicle = self.model_type_vehicle(image_path)
+            results_type_vehicle = self.type_vehicles(image_path, type_vehicle)
+            print(results_type_vehicle)
+            
+            if results_type_vehicle == "car":
+                results_angle_car = self.model_angle_car(image_path)
+                class_names = self.model_angle_car.names
+                for result in results_angle_car:
+                    for box in result.boxes:
+                        class_id = int(box.cls)  # Índice da classe detectada
+                        class_name = class_names[class_id]  # Nome da classe correspondente]
+                        if class_name in ["0", "180"]:
+                            results_recorte_placa = self.model_crop_car(image_path)
+                            image, product = self.get_closest_items(image_path, results_recorte_placa)
+                            if product == "New Car":
+                                plate, labels_top, labels_bottom = plate_new_car_0_180(product, image)
+                                plate = self.transform_plate(plate, product)
+                            if product == "Old Car":
+                                plate, labels_top, labels_bottom = plate_old_car_0_180(product, image)
+                                plate = self.transform_plate(plate, product)
+                        if class_name in ["45", "225"]:
+                            results_recorte_placa = self.model_crop_car(image_path)
+                            image, product = self.get_closest_items(image_path, results_recorte_placa)
+                            if product == "New Car":
+                                plate, labels_top, labels_bottom = plate_new_car_45_225(product, image)
+                                plate = self.transform_plate(plate, product)
+                            if product == "Old Car":
+                                plate, labels_top, labels_bottom = plate_old_car_45_225(product, image)
+                                plate = self.transform_plate(plate, product)
+                        if class_name in ["135", "315"]:
+                            results_recorte_placa = self.model_crop_car(image_path)
+                            image, product = self.get_closest_items(image_path, results_recorte_placa)
+                            if product == "New Car":
+                                plate, labels_top, labels_bottom = plate_new_car_135_315(product, image)
+                                plate = self.transform_plate(plate, product)
+                            if product == "Old Car":
+                                plate, labels_top, labels_bottom = plate_old_car_135_315(product, image)
+                                plate = self.transform_plate(plate, product)
+
+
+            if results_type_vehicle == "motorcycle":
+                results_recorte_placa = self.model_crop_moto(image_path)
+                image, product = self.get_closest_items(image_path, results_recorte_placa)
+                print(image,product)
+                if product == "New Moto":
+                    plate, labels_top, labels_bottom = plate_rotation_or_not_new_moto(product, image)
+                    plate = self.transform_plate(plate, product)
+                if product == "Old Moto":
+                    print("CAIU NO OLD MOTO")
+                    plate, labels_top, labels_bottom = plate_rotation_or_not_old_moto(product, image)
+                    plate = self.transform_plate(plate, product)
             
             if thumbs:
                 if "Moto" in product:
@@ -207,14 +366,16 @@ class PlateRecognitionModel(BaseModel):
 
         except Exception as exc:
             product = "Produto não reconhecido"
-            print("Falha ao ler placa::::: ", exc)
+            print("Falha ao ler placa::::: ", exc)           
 
         finally:
             return {
+                "type_vehicle": results_type_vehicle if results_type_vehicle else "Tipo não reconhecido",
+                "angle": class_name or "Não aplicável",
                 "result": plate or "Placa não reconhecida",
-                "thumb_top": thumb_top,
+                "thumb_top": thumb_top if thumb_top else None,
                 "thumb_bottom": thumb_bottom if "Moto" in product else None,
-                "product": product,
+                "product": product if product else None,
                 "labels_top": labels_top if "Moto" in product else None,  # Retorna as coordenadas da parte superior para motos
                 "labels_bottom": labels_bottom if "Moto" in product else None  # Retorna as coordenadas da parte inferior para motos
             }

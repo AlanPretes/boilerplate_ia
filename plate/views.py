@@ -60,9 +60,22 @@ def new(request):
             image_path = new_plate.plate_image.path
 
             app_config = apps.get_app_config('plate')
-            model_crop = app_config.model_crop
-            model_letters = app_config.model_letters
-            plate_recognition_model = PlateRecognitionModel(model_crop, model_letters)
+            model_angle_car = app_config.model_angle_car
+            model_crop_moto = app_config.model_crop_moto
+            model_crop_car = app_config.model_crop_car
+            model_letters_new_moto = app_config.model_letters_new_moto
+            model_letters_old_moto = app_config.model_letters_old_moto
+            model_letters_old_car_0_180 = app_config.model_letters_old_car_0_180
+            model_letters_new_car_0_180 = app_config.model_letters_new_car_0_180
+            model_letters_old_car_45_225 = app_config.model_letters_old_car_45_225 
+            model_letters_new_car_45_225 = app_config.model_letters_new_car_45_225 
+            model_letters_old_car_135_315 = app_config.model_letters_old_car_135_315
+            model_letters_new_car_135_315 = app_config.model_letters_new_car_135_315
+            model_type_vehicle = app_config.model_type_vehicle
+            plate_recognition_model = PlateRecognitionModel(model_type_vehicle, model_angle_car,
+                model_crop_moto, model_crop_car, model_letters_new_moto, model_letters_old_moto,
+                model_letters_old_car_0_180, model_letters_new_car_0_180, model_letters_old_car_45_225,
+                model_letters_new_car_45_225, model_letters_old_car_135_315, model_letters_new_car_135_315)
 
             # Faz a predição usando o caminho da imagem salva
             result = plate_recognition_model.predict(image_path, thumbs=thumbs)
@@ -74,7 +87,7 @@ def new(request):
 
                 # Reabre o arquivo para leitura e salva na pasta 'nao_reconhecido'
                 file.seek(0)  # Garante que o ponteiro do arquivo esteja no início
-                unrecognized_image_name = os.path.join(save_directory, f"{identifier}_{plate}")
+                unrecognized_image_name = os.path.join(save_directory, f"{identifier}_{plate}.jpg")
                 with open(unrecognized_image_name, 'wb') as f:
                     f.write(file.read())
 
@@ -92,6 +105,8 @@ def new(request):
                 new_plate.img_bottom.save(thumb_bottom_name, ContentFile(thumb_bottom_data))
 
             # Associa o resultado ao modelo PlateModel
+            new_plate.type_vehicle = result.get('type_vehicle')
+            new_plate.angle = result.get('angle')
             new_plate.product = result.get('product', 'Produto Desconhecido')
             new_plate.labels_top = result.get('labels_top', [])
             new_plate.labels_bottom = result.get('labels_bottom', [])
@@ -241,9 +256,22 @@ def new_plate_api(request):
     image_path = new_plate.plate_image.path
 
     app_config = apps.get_app_config('plate')
-    model_crop = app_config.model_crop
-    model_letters = app_config.model_letters
-    plate_recognition_model = PlateRecognitionModel(model_crop, model_letters)
+    model_angle_car = app_config.model_angle_car
+    model_crop_moto = app_config.model_crop_moto
+    model_crop_car = app_config.model_crop_car
+    model_letters_new_moto = app_config.model_letters_new_moto
+    model_letters_old_moto = app_config.model_letters_old_moto
+    model_letters_old_car_0_180 = app_config.model_letters_old_car_0_180
+    model_letters_new_car_0_180 = app_config.model_letters_new_car_0_180
+    model_letters_old_car_45_225 = app_config.model_letters_old_car_45_225 
+    model_letters_new_car_45_225 = app_config.model_letters_new_car_45_225 
+    model_letters_old_car_135_315 = app_config.model_letters_old_car_135_315
+    model_letters_new_car_135_315 = app_config.model_letters_new_car_135_315
+    model_type_vehicle = app_config.model_type_vehicle
+    plate_recognition_model = PlateRecognitionModel(model_type_vehicle, model_angle_car,
+        model_crop_moto, model_crop_car, model_letters_new_moto, model_letters_old_moto,
+        model_letters_old_car_0_180, model_letters_new_car_0_180, model_letters_old_car_45_225,
+        model_letters_new_car_45_225, model_letters_old_car_135_315, model_letters_new_car_135_315)
 
     result = plate_recognition_model.predict(image_path, thumbs=thumbs)
 
@@ -266,6 +294,8 @@ def new_plate_api(request):
         thumb_bottom_name = os.path.join(save_directory, f"BOTTOM_{identifier}_{plate}.jpg")
         new_plate.img_bottom.save(thumb_bottom_name, ContentFile(thumb_bottom_data))
 
+    new_plate.type_vehicle = result.get('type_vehicle')
+    new_plate.angle = result.get('angle')
     new_plate.product = result.get('product', 'Produto Desconhecido')
     new_plate.labels_top = result.get('labels_top', [])
     new_plate.labels_bottom = result.get('labels_bottom', [])
@@ -278,12 +308,14 @@ def new_plate_api(request):
     new_plate.save()
     
     response_data = {
-        "Identificador": identifier,
-        "Produto": new_plate.product,
-        "Placa": plate,
-        "Resultado Placa": new_plate.result,
-        "Match Placa": new_plate.match,
-        "Runtime": new_plate.runtime
+        "identificador": identifier,
+        "type_vehicle": new_plate.type_vehicle,
+        "angle": new_plate.angle,
+        "tipo_placa": new_plate.product,
+        "placa_fornecida": plate,
+        "result_placa": new_plate.result,
+        "match_placa": new_plate.match,
+        "runtime": new_plate.runtime
     }
 
     return Response(response_data, status=status.HTTP_201_CREATED)

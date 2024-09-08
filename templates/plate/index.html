@@ -9,6 +9,8 @@
         <tr>
             <th>Imagens</th>
             <th>Identificador</th>
+            <th>Tipo do Veículo</th>
+            <th>Ângulo</th>
             <th>Produto</th>
             <th>Placa</th>
             <th>Resultado Placa</th>
@@ -31,6 +33,8 @@
                     >{% include 'icons/search.svg' %}</button>
                 </td>
                 <td>{{ log.identifier }}</td>
+                <td>{{ log.type_vehicle }}</td>
+                <td>{{ log.angle }}</td>
                 <td>{{ log.product }}</td>
                 <td>{{ log.plate }}</td>
                 <td>{{ log.result }}</td>

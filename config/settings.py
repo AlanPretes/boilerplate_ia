@@ -25,11 +25,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-xed&n__#dgn=oy3yd19rhjav2($#h$ie4)q9#ansp*7z%dc=vw'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
-
-ALLOWED_HOSTS = ['154.38.187.112']
-CSRF_TRUSTED_ORIGINS = ['http://154.38.187.112']
-
+DEBUG = True
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -43,7 +40,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'user',
-    'ia',
     'plate'
 ]
 
