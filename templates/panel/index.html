@@ -1,0 +1,32 @@
+{% extends 'panel/base.html' %}
+
+{% block page_title %}Resultados{% endblock %}
+{% block title %}Resultados{% endblock %}
+
+{% block content %}
+<div class="table-responsive">
+    <table class="table text-center table-striped">
+        <tr>
+            <th>Imagens</th>
+            <th>Identificador</th>
+            <th>Air Bag</th>
+            <th>Runtime</th>
+        </tr>
+        <tbody>
+            {% for log in logs %}
+            <tr>
+                <td>
+                    <button>{% include 'icons/search.svg' %}</button>
+                </td>
+                <td>{{ log.identifier }}</td>
+                <td>{{ log.airbag_icon }}</td>
+                <td>{{ log.runtime|floatformat:2 }}s</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% include 'components/pagination.html' %}
+
+{% endblock content %}
