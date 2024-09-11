@@ -99,7 +99,8 @@ class PanelAlerts(BaseModel):
                     image = plot_boxes(image, box, label, confidence)
                     
                     # Gerar um nome aleatório para a imagem
-                    save_path = os.path.join(f"./media/images/panel/reconhecidas_airbag", image_name)
+                    path = f"images/panel/reconhecidas_airbag/{image_name}"
+                    save_path = os.path.join(f"./media/{path}")
 
                     # Criar pasta se não existir
                     os.makedirs(os.path.dirname(save_path), exist_ok=True)
@@ -111,6 +112,6 @@ class PanelAlerts(BaseModel):
         finally:
             response = {
                 "airbag_icon": airbag_icon or "Ícone Air Bag não detectado",
-                "thumb": save_path if save_path else "Erro ao criar thumb",
+                "thumb": path if path else "Erro ao criar thumb",
             }
             return response
