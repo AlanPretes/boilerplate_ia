@@ -17,34 +17,6 @@ def plot_boxes(image, box, label=None, confidence=None):
     color = (0, 255, 0)  # Verde
     thickness = max(1, image.shape[1] // 400)
     cv2.rectangle(image, (x1, y1), (x2, y2), color, thickness)
-    
-    if label and confidence is not None:
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        font_scale = max(0.5, image.shape[1] / 3000)
-        font_thickness = max(1, image.shape[1] // 1000)
-        label_size = cv2.getTextSize(label, font, font_scale, font_thickness)[0]
-        
-        label_x = max(0, min(x1, image.shape[1] - label_size[0]))
-        label_y = y1 - 10 if y1 - 10 - label_size[1] > 0 else y2 + label_size[1] + 10
-        
-        cv2.rectangle(
-            image, 
-            (label_x, label_y - label_size[1]),
-            (label_x + label_size[0], label_y + label_size[1] // 2), 
-            color, 
-            cv2.FILLED,
-        )
-        
-        cv2.putText(
-            image, 
-            label, 
-            (label_x, label_y), 
-            font,
-            font_scale, 
-            (0, 0, 0), 
-            font_thickness
-        )
-    
     return image
 
 
@@ -74,6 +46,7 @@ class PanelAlerts(BaseModel):
     
     def predict(self, image_path: str, image_name:str):
         airbag_icon = None
+        path = "Erro ao criar thumb"
         save_path = image_path
         try:
             # Carregar imagem
@@ -106,12 +79,13 @@ class PanelAlerts(BaseModel):
                     os.makedirs(os.path.dirname(save_path), exist_ok=True)
 
                     # Salvar a imagem
-                    cv2.imwrite(save_path, image)
+                    cv2.imwrite(save_path, image)                    
+                    
         except Exception as e:
             airbag_icon = f"Erro: {str(e)}"
         finally:
             response = {
                 "airbag_icon": airbag_icon or "Ícone Air Bag não detectado",
-                "thumb": path if path else "Erro ao criar thumb",
+                "thumb": path,
             }
             return response

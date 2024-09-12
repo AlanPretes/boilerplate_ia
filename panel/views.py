@@ -21,6 +21,7 @@ from django.utils import timezone
 from django.db.models import Count, Sum
 from PIL import Image
 from io import BytesIO
+from urllib.parse import urlparse
 
 
 @login_required
@@ -185,147 +186,77 @@ def new(request):
 #                     os.rmdir(os.path.join(root, name))
 #             os.rmdir(temp_dir)
 
-# @csrf_exempt  # Desativa CSRF para esta view
-# @api_view(['POST'])
-# @permission_classes([IsAuthenticated])
-# def new_plate_api(request):
-#     start = timezone.now()
-#     identifier = request.data.get('identifier')
-#     plate = str(request.data.get('plate')).upper()
-#     image_url = request.data.get('image_url')
-#     thumbs = request.data.get('thumbs') == 'true'
-
-#     if not image_url:
-#         return Response({'error': 'Image URL is required.'}, status=status.HTTP_400_BAD_REQUEST)
-
-#     # Baixar a imagem da URL
-#     response = requests.get(image_url)
-#     if response.status_code != 200:
-#         return Response({'error': 'Failed to download image.'}, status=status.HTTP_400_BAD_REQUEST)
-
-#     # Criar um arquivo a partir da imagem baixada
-#     image_name = f"{plate}.jpg"
-#     image_file = ContentFile(response.content, name=image_name)
-
-#     new_plate = PlateModel(
-#         identifier=str(identifier),
-#         plate=str(plate),
-#         product="",
-#         runtime=0.0
-#     )
-
-#     new_plate.plate_image.save(image_name, image_file)
-#     new_plate.save()
-
-#     image_path = new_plate.plate_image.path
-
-#     app_config = apps.get_app_config('plate')
-#     model_angle_car = app_config.model_angle_car
-#     model_crop_moto = app_config.model_crop_moto
-#     model_crop_car = app_config.model_crop_car
-#     model_letters_new_moto = app_config.model_letters_new_moto
-#     model_letters_old_moto = app_config.model_letters_old_moto
-#     model_letters_old_car_0_180 = app_config.model_letters_old_car_0_180
-#     model_letters_new_car_0_180 = app_config.model_letters_new_car_0_180
-#     model_letters_old_car_45_225 = app_config.model_letters_old_car_45_225 
-#     model_letters_new_car_45_225 = app_config.model_letters_new_car_45_225 
-#     model_letters_old_car_135_315 = app_config.model_letters_old_car_135_315
-#     model_letters_new_car_135_315 = app_config.model_letters_new_car_135_315
-#     model_type_vehicle = app_config.model_type_vehicle
-#     plate_recognition_model = PlateRecognitionModel(model_type_vehicle, model_angle_car,
-#         model_crop_moto, model_crop_car, model_letters_new_moto, model_letters_old_moto,
-#         model_letters_old_car_0_180, model_letters_new_car_0_180, model_letters_old_car_45_225,
-#         model_letters_new_car_45_225, model_letters_old_car_135_315, model_letters_new_car_135_315)
-
-#     result = plate_recognition_model.predict(image_path, thumbs=thumbs)
-
-#     if result.get('product') == 'Produto não reconhecido' or result.get('result') == 'Placa não reconhecida':
-#         save_directory = 'nao_reconhecido/'
-#         os.makedirs(save_directory, exist_ok=True)
-#         unrecognized_image_name = os.path.join(save_directory, f"{identifier}_{plate}.jpg")
-#         with open(unrecognized_image_name, 'wb') as f:
-#             f.write(image_file.read())
-
-#     if result.get('thumb_top'):
-#         save_directory = './'
-#         thumb_top_data = base64.b64decode(result['thumb_top'])
-#         thumb_top_name = os.path.join(save_directory, f"TOP_{identifier}_{plate}.jpg")
-#         new_plate.img_top.save(thumb_top_name, ContentFile(thumb_top_data))
-
-#     if result.get('thumb_bottom'):
-#         save_directory = './'
-#         thumb_bottom_data = base64.b64decode(result['thumb_bottom'])
-#         thumb_bottom_name = os.path.join(save_directory, f"BOTTOM_{identifier}_{plate}.jpg")
-#         new_plate.img_bottom.save(thumb_bottom_name, ContentFile(thumb_bottom_data))
-
-#     new_plate.type_vehicle = result.get('type_vehicle')
-#     new_plate.angle = result.get('angle')
-#     new_plate.product = result.get('product', 'Produto Desconhecido')
-#     new_plate.labels_top = result.get('labels_top', [])
-#     new_plate.labels_bottom = result.get('labels_bottom', [])
-#     new_plate.result = result.get('result', 'Placa não reconhecida')
-
-#     if result['result'] == plate:
-#         new_plate.match = True
-
-#     new_plate.runtime = (timezone.now() - start).total_seconds()
-#     new_plate.save()
+@csrf_exempt  # Desativa CSRF para esta view
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def new_plate_api(request):
+    start = datetime.now()
+    identifier = request.data.get('identifier')
+    image_url = request.data.get('image_url')  # Obter todos os arquivos
+    thumbs = request.data.get('thumbs')
     
-#     response_data = {
-#         "identificador": identifier,
-#         "type_vehicle": new_plate.type_vehicle,
-#         "angle": new_plate.angle,
-#         "tipo_placa": new_plate.product,
-#         "placa_fornecida": plate,
-#         "result_placa": new_plate.result,
-#         "match_placa": new_plate.match,
-#         "runtime": new_plate.runtime
-#     }
+    if not image_url:
+        return Response({'error': 'Image URL is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
-#     return Response(response_data, status=status.HTTP_201_CREATED)
+    # Baixar a imagem da URL
+    response = requests.get(image_url)
+    if response.status_code != 200:
+        return Response({'error': 'Failed to download image.'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    parsed_url = urlparse(image_url)
+    image_name = parsed_url.path.split('/')[-1]
+    image_file = ContentFile(response.content, name=image_name)
+    
+    new_panel = PanelModel(
+        identifier=str(identifier),
+        runtime=0.0
+    )
+
+    new_panel.image_airbag_icon_origin = image_file
+    new_panel.save()
+
+    image_path_origin = new_panel.image_airbag_icon_origin.path
+    image_name = str(new_panel.image_airbag_icon_origin.name).split("/")[-1]
+
+    app_config = apps.get_app_config('panel')
+    model_airbag_icon = app_config.model_airbag_icon
+    panel_recognition_model = PanelAlerts(model_airbag_icon)
+
+    # Faz a predição usando o caminho da imagem salva
+    result = panel_recognition_model.predict(image_path_origin, image_name=image_name)
+    print(result)
+    
+    # Extrai o thumb do resultado
+    thumb = result.get('thumb')
+
+    if thumbs and thumb and thumb != "Erro ao criar thumb":       
+        new_panel.image_airbag_icon = thumb
+    else:
+        # Caso contrário, usa o arquivo original (path)
+        new_panel.image_airbag_icon = image_file
+            
+    # Associa o resultado ao modelo PlateModel
+    new_panel.airbag_icon = result.get('airbag_icon')
+
+    new_panel.runtime = (datetime.now() - start).total_seconds()
+    new_panel.save()
+    
+   
+
+    response_data = {
+        "identificador": identifier,
+        "result": new_panel.airbag_icon,
+        "runtime": new_panel.runtime
+    }
+
+    return Response(response_data, status=status.HTTP_201_CREATED)
 
 
-# @login_required
-# def resultados_view(request):
-#     # New Moto
-#     new_moto_match_count = PlateModel.objects.filter(match=True, product="New Moto").count()
-#     new_moto_no_match_count = PlateModel.objects.filter(match=False, product="New Moto").count()
-#     new_moto_total = new_moto_match_count + new_moto_no_match_count
-#     new_moto_accuracy = (new_moto_match_count / new_moto_total) * 100 if new_moto_total > 0 else 0
+@login_required
+def resultados_view(request):
+    airbag_icon_count = PanelModel.objects.filter(airbag_icon="Ícone AirBag detectado").count()
 
-#     # Old Moto
-#     old_moto_match_count = PlateModel.objects.filter(match=True, product="Old Moto").count()
-#     old_moto_no_match_count = PlateModel.objects.filter(match=False, product="Old Moto").count()
-#     old_moto_total = old_moto_match_count + old_moto_no_match_count
-#     old_moto_accuracy = (old_moto_match_count / old_moto_total) * 100 if old_moto_total > 0 else 0
-
-#     # New Car
-#     new_car_match_count = PlateModel.objects.filter(match=True, product="New Car").count()
-#     new_car_no_match_count = PlateModel.objects.filter(match=False, product="New Car").count()
-#     new_car_total = new_car_match_count + new_car_no_match_count
-#     new_car_accuracy = (new_car_match_count / new_car_total) * 100 if new_car_total > 0 else 0
-
-#     # Old Car
-#     old_car_match_count = PlateModel.objects.filter(match=True, product="Old Car").count()
-#     old_car_no_match_count = PlateModel.objects.filter(match=False, product="Old Car").count()
-#     old_car_total = old_car_match_count + old_car_no_match_count
-#     old_car_accuracy = (old_car_match_count / old_car_total) * 100 if old_car_total > 0 else 0
-
-#     context = {
-#         'new_moto_match_count': new_moto_match_count,
-#         'new_moto_no_match_count': new_moto_no_match_count,
-#         'new_moto_accuracy': new_moto_accuracy,
-
-#         'old_moto_match_count': old_moto_match_count,
-#         'old_moto_no_match_count': old_moto_no_match_count,
-#         'old_moto_accuracy': old_moto_accuracy,
-
-#         'new_car_match_count': new_car_match_count,
-#         'new_car_no_match_count': new_car_no_match_count,
-#         'new_car_accuracy': new_car_accuracy,
-
-#         'old_car_match_count': old_car_match_count,
-#         'old_car_no_match_count': old_car_no_match_count,
-#         'old_car_accuracy': old_car_accuracy,
-#     }
-#     return render(request, 'plate/resultados.html', context)
+    context = {
+        'airbag_icon_count': airbag_icon_count,
+    }
+    return render(request, 'panel/resultados.html', context)
