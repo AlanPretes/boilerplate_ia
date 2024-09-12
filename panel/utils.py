@@ -46,7 +46,7 @@ class PanelAlerts(BaseModel):
     
     def predict(self, image_path: str, image_name:str):
         airbag_icon = None
-        path = "Erro ao criar thumb"
+        thumb_url = "Erro ao criar thumb"
         save_path = image_path
         try:
             # Carregar imagem
@@ -81,7 +81,7 @@ class PanelAlerts(BaseModel):
                     # Salvar a imagem
                     cv2.imwrite(save_path, image) 
                     
-                    thumb_url = os.path.join(settings.MEDIA_URL, path)                   
+                    thumb_url = os.path.join(settings.MEDIA_URL, path)
                     
         except Exception as e:
             airbag_icon = f"Erro: {str(e)}"
