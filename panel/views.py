@@ -59,7 +59,6 @@ def new(request):
 
             image_path_origin = new_panel.image_airbag_icon_origin.path
             image_name = str(new_panel.image_airbag_icon_origin.name).split("/")[-1]
-            print(image_name)
 
             app_config = apps.get_app_config('panel')
             model_airbag_icon = app_config.model_airbag_icon
@@ -224,7 +223,6 @@ def new_plate_api(request):
 
     # Faz a predição usando o caminho da imagem salva
     result = panel_recognition_model.predict(image_path_origin, image_name=image_name)
-    print(result)
     
     # Extrai o thumb do resultado
     thumb = result.get('thumb')

@@ -346,12 +346,10 @@ class PlateRecognitionModel(BaseModel):
             if results_type_vehicle == "motorcycle":
                 results_recorte_placa = self.model_crop_moto(image_path)
                 image, product = self.get_closest_items(image_path, results_recorte_placa)
-                print(image,product)
                 if product == "New Moto":
                     plate, labels_top, labels_bottom = plate_rotation_or_not_new_moto(product, image)
                     plate = self.transform_plate(plate, product)
                 if product == "Old Moto":
-                    print("CAIU NO OLD MOTO")
                     plate, labels_top, labels_bottom = plate_rotation_or_not_old_moto(product, image)
                     plate = self.transform_plate(plate, product)
             
