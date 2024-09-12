@@ -13,8 +13,8 @@ class PanelModel(models.Model):
     identifier = models.CharField(max_length=255, null=False)
     airbag_icon = models.JSONField(null=True, blank=True)
     labels = models.JSONField(null=True, blank=True)
-    image_airbag_icon_origin = models.ImageField(upload_to='./images/panel/complete', max_length=255, null=True, blank=True)
-    image_airbag_icon = models.ImageField(upload_to='./images/panel/reconhecidas_airbag', max_length=255, null=True, blank=True)
+    image_airbag_icon_origin = models.ImageField(upload_to='images/panel/complete', max_length=255, null=True, blank=True)
+    image_airbag_icon = models.ImageField(upload_to='images/panel/reconhecidas_airbag', max_length=255, null=True, blank=True)
     runtime = models.FloatField(default=0.0)
 
     def __str__(self):
