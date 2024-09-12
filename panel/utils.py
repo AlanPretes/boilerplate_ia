@@ -73,19 +73,21 @@ class PanelAlerts(BaseModel):
                     
                     # Gerar um nome aleatório para a imagem
                     path = f"images/panel/reconhecidas_airbag/{image_name}"
-                    save_path = os.path.join(f"./media/{path}")
+                    save_path = os.path.join(settings.MEDIA_ROOT, path)
 
                     # Criar pasta se não existir
                     os.makedirs(os.path.dirname(save_path), exist_ok=True)
 
                     # Salvar a imagem
-                    cv2.imwrite(save_path, image)                    
+                    cv2.imwrite(save_path, image) 
+                    
+                    thumb_url = os.path.join(settings.MEDIA_URL, path)                   
                     
         except Exception as e:
             airbag_icon = f"Erro: {str(e)}"
         finally:
             response = {
                 "airbag_icon": airbag_icon or "Ícone Air Bag não detectado",
-                "thumb": path,
+                "thumb": thumb_url,
             }
             return response
