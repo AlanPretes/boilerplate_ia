@@ -119,16 +119,12 @@ class PlateRecognitionModel(BaseModel):
         center_x, center_y = image_width / 2, image_height / 2
         
         distances = []
-        br = False
         
         for result in results:
             for bbox in result.boxes:
                 x1, y1, x2, y2 = bbox.xyxy[0].cpu().numpy()
                 item_center_x, item_center_y = (x1 + x2) / 2, (y1 + y2) / 2
                 item_name = result.names[int(bbox.cls)]
-                if item_name == 'BR':
-                    br = True
-                    continue
                 distance = euclidean_distance(item_center_x, item_center_y, center_x, center_y)
                 distances.append((distance, item_name, (x1, y1, x2, y2)))
         
@@ -138,12 +134,6 @@ class PlateRecognitionModel(BaseModel):
         if closest_items[0][1]:
             for distance, name, (x1, y1, x2, y2) in closest_items:
                 cropped_img = img[int(y1):int(y2), int(x1):int(x2)]
-
-                if name == 'New Moto' and not br:
-                    name = 'Old Moto'
-
-                if name == 'New Car' and not br:
-                    name = 'Old Car'
 
                 return cropped_img, name
             
