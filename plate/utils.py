@@ -333,7 +333,7 @@ class PlateRecognitionModel(BaseModel):
                                 plate = self.transform_plate(plate, product)
 
 
-            if results_type_vehicle == "motorcycle":
+            else:
                 results_recorte_placa = self.model_crop_moto(image_path)
                 image, product = self.get_closest_items(image_path, results_recorte_placa)
                 if product == "New Moto":
