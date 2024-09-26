@@ -66,7 +66,7 @@ class PanelAlerts(BaseModel):
             # Percorre cada detecção e processa se for o ícone airbag
             for box, cls_idx, confidence in zip(boxes, class_indices, confidences):
                 label = class_names[int(cls_idx)]
-                if label == "ABS":
+                if label == "airbag":
                     airbag_icon = "Ícone AirBag detectado"
                     # Marcação da imagem com a caixa delimitadora e label
                     image = plot_boxes(image, box, label, confidence)
