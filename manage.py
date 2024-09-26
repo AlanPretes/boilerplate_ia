@@ -27,7 +27,7 @@ def load_models():
     model_type_vehicle = YOLO(os.path.join(os.path.dirname(__file__), 'plate/ias_models/type_vehicle.pt'))
     model_crop_moto = YOLO(os.path.join(os.path.dirname(__file__), 'plate/ias_models/tipo_placa_moto.pt'))
     model_crop_car = YOLO(os.path.join(os.path.dirname(__file__), 'plate/ias_models/tipo_placa_car.pt'))
-    model_letters_new_moto = YOLO(os.path.join(os.path.dirname(__file__), 'plate/ias_models/letras_new_moto_.pt'))
+    model_letters_new_moto = YOLO(os.path.join(os.path.dirname(__file__), 'plate/ias_models/letras_new_moto__.pt'))
     model_letters_old_moto = YOLO(os.path.join(os.path.dirname(__file__), 'plate/ias_models/letras_old_moto.pt'))
     model_letters_old_car_0_180 = YOLO(os.path.join(os.path.dirname(__file__), 'plate/ias_models/letras_old_car_0_180.pt'))
     model_letters_new_car_0_180 = YOLO(os.path.join(os.path.dirname(__file__), 'plate/ias_models/letras_new_car_0_180.pt'))
