@@ -277,7 +277,7 @@ class PlateRecognitionModel(BaseModel):
                 height = y2 - y1
                 height_percent = (height / image_height) * 100
 
-                if height_percent >= min_height_percent:
+                if height_percent >= min_height_percent and conf > 0.40:
                     detections.append((class_name, (x1 + x2) / 2, x1, y1, x2, y2))
                     # Salva as coordenadas no formato YOLO: [class, x_center, y_center, width, height]
                     x_center = ((x1 + x2) / 2) / image_width
