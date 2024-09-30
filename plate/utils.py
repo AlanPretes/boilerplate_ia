@@ -261,9 +261,9 @@ class PlateRecognitionModel(BaseModel):
         def get_plate(results_letras_placa, image, product, local) -> dict:
             labels = []
             if product in ['New Moto', 'Old Moto']:
-                min_height_percent = 45
+                min_height_percent = 30
             else:
-                min_height_percent = 50
+                min_height_percent = 30
             
             results_letras_placa = results_letras_placa[0]
             image_height, image_width = image.shape[:2]
