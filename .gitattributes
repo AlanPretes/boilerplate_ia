@@ -1,2 +1,4 @@
 plate/ias_models/type_vehicle.pt filter=lfs diff=lfs merge=lfs -text
 panel/ias_models/airbag_icon.pt filter=lfs diff=lfs merge=lfs -text
+panel/ias_models/airbag_icon_.pt filter=lfs diff=lfs merge=lfs -text
+plate/ias_models/letras_new_moto___.pt filter=lfs diff=lfs merge=lfs -text
