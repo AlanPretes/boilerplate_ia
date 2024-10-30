@@ -7,7 +7,6 @@
 <div class="table-responsive">
     <table class="table text-center table-striped">
         <tr>
-            <th>Imagens</th>
             <th>Identificador</th>
             <th>Tipo do Veículo</th>
             <th>Ângulo</th>
@@ -20,18 +19,6 @@
         <tbody>
             {% for log in logs %}
             <tr>
-                <td>
-                    <button 
-                        class="btn btn-primary btn-sm log-img"
-                        data-img-top="{% if log.img_top %}{{ log.img_top.url }}{% else %}https://fakeimg.pl/600x300/e65959/faf0f0?text=Imagem+Top+não+localizada&font=bebas{% endif %}"
-                        data-img-bottom="{% if log.img_bottom %}{{ log.img_bottom.url }}{% else %}https://fakeimg.pl/600x300/e65959/faf0f0?text=Imagem+Bottom+não+localizada&font=bebas{% endif %}"
-                        data-result-plate="{{ log.result }}" 
-                        data-match-plate="{{ log.match }}" 
-                        data-plate="{{ log.plate }}" 
-                        data-bs-toggle="modal" 
-                        data-bs-target="#modal-preview"
-                    >{% include 'icons/search.svg' %}</button>
-                </td>
                 <td>{{ log.identifier }}</td>
                 <td>{{ log.type_vehicle }}</td>
                 <td>{{ log.angle }}</td>
@@ -48,33 +35,6 @@
 
 {% include 'components/pagination.html' %}
 
-<div class="modal fade" id="modal-preview" tabindex="-1" aria-labelledby="modal-previewLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h1 class="modal-title fs-5" id="modal-previewLabel">
-                    Placa Original: <span id="expected-plate"></span> - 
-                    Leitura Placa: <span id="ia-result-plate"></span> - 
-                    Match Placa: <span id="ia-match-plate"></span>
-                    <br>
-                </h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <h5>Imagem Top</h5>
-                        <img src="" class="d-block w-100" id="img-preview-top">
-                    </div>
-                    <div class="col-md-6">
-                        <h5>Imagem Bottom</h5>
-                        <img src="" class="d-block w-100" id="img-preview-bottom">
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
@@ -83,18 +43,6 @@
                 document.getElementById("expected-plate").innerHTML = el.dataset["plate"];
                 document.getElementById("ia-result-plate").innerHTML = el.dataset["resultPlate"];
                 document.getElementById("ia-match-plate").innerHTML = el.dataset["matchPlate"] === 'True' ? 'Sim' : 'Não';
-
-                if (el.dataset["imgTop"].trim().length) {
-                    document.getElementById("img-preview-top").src = el.dataset["imgTop"];
-                } else {
-                    document.getElementById("img-preview-top").src = "https://fakeimg.pl/600x300/e65959/faf0f0?text=Imagem+Top+não+localizada&font=bebas";
-                }
-
-                if (el.dataset["imgBottom"].trim().length) {
-                    document.getElementById("img-preview-bottom").src = el.dataset["imgBottom"];
-                } else {
-                    document.getElementById("img-preview-bottom").src = "https://fakeimg.pl/600x300/e65959/faf0f0?text=Imagem+Bottom+não+localizada&font=bebas";
-                }
             });
         });
     });

@@ -34,9 +34,6 @@ class PlateModel(models.Model):
     result = models.JSONField(null=True, blank=True)
     labels_top = models.JSONField(null=True, blank=True)
     labels_bottom = models.JSONField(null=True, blank=True)
-    plate_image = models.ImageField(upload_to='images/plates/complete', max_length=255)
-    img_top = models.ImageField(upload_to='images/plates/top', max_length=255, null=True, blank=True)
-    img_bottom = models.ImageField(upload_to='images/plates/bottom', max_length=255, null=True, blank=True)
     match = models.BooleanField(default=False)
     runtime = models.FloatField(default=0.0)
 

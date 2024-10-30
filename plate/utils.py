@@ -83,30 +83,37 @@ class PlateRecognitionModel(BaseModel):
         self.model_letters_old_car_135_315 = model_letters_old_car_135_315
         self.model_letters_new_car_135_315 = model_letters_new_car_135_315
         
+        
     def type_vehicles(self, img_path, results):
         img = cv2.imread(img_path)
-        
-        # Variáveis para armazenar o maior veículo detectado (carro ou moto)
-        largest_area = 0
+        img_height, img_width, _ = img.shape
+        center_x, center_y = img_width / 2, img_height / 2
+
+        closest_distance = float('inf')
         vehicle_type = None
 
-        # Iterar sobre os resultados para encontrar o maior carro ou moto
+        # Iterar sobre os resultados para encontrar o carro ou moto mais próximo do centro
         for result in results:
             for bbox in result.boxes:
                 if bbox.cls in [2, 3]:  # Classe 2 para "car" e classe 3 para "motorcycle" no dataset COCO
                     # Obter coordenadas da caixa delimitadora
                     x1, y1, x2, y2 = bbox.xyxy[0].cpu().numpy()
-                    # Calcular a área da caixa
-                    box_area = (x2 - x1) * (y2 - y1)
+                    # Calcular o centro da caixa delimitadora
+                    box_center_x = (x1 + x2) / 2
+                    box_center_y = (y1 + y2) / 2
+                    
+                    # Calcular a distância do centro da caixa até o centro da imagem
+                    distance_to_center = np.sqrt((box_center_x - center_x) ** 2 + (box_center_y - center_y) ** 2)
+                    
+                    # Verificar se essa caixa é a mais próxima do centro até agora
+                    if distance_to_center < closest_distance:
+                        closest_distance = distance_to_center
+                        if bbox.cls == 2:
+                            vehicle_type = "car"
+                        if bbox.cls == 3:
+                            vehicle_type = "motorcycle"
 
-                    # Verificar se essa caixa é a maior até agora
-                    if box_area > largest_area:
-                        largest_area = box_area
-                        vehicle_type = "car" if bbox.cls == 2 else "motorcycle"
-
-            return vehicle_type
-        else:
-            return "Nenhum veículo foi detectado"
+        return vehicle_type if vehicle_type else "Nenhum veículo foi detectado"
 
 
     
@@ -159,7 +166,7 @@ class PlateRecognitionModel(BaseModel):
         return iou
     
 
-    def predict(self, image_path: str, thumbs, **kwargs):
+    def predict(self, image_path: str, **kwargs):
         plate, thumb_top, thumb_bottom, product, labels_top, labels_bottom = None, None, None, None, [], []
 
         class_name = "Não aplicável"
@@ -343,15 +350,6 @@ class PlateRecognitionModel(BaseModel):
                     plate, labels_top, labels_bottom = plate_rotation_or_not_old_moto(product, image)
                     plate = self.transform_plate(plate, product)
             
-            if thumbs:
-                if "Moto" in product:
-                    # Para motos, crie duas miniaturas
-                    thumb_top = converto_image_to_b64(image[:int(0.70 * image.shape[0])])  # Parte superior
-                    thumb_bottom = converto_image_to_b64(image[int(0.50 * image.shape[0]):])  # Parte inferior
-                else:
-                    # Para carros, crie uma única miniatura da imagem completa
-                    thumb_top = converto_image_to_b64(image)  # Imagem completa
-
         except Exception as exc:
             product = "Produto não reconhecido"
             print("Falha ao ler placa::::: ", exc)           
