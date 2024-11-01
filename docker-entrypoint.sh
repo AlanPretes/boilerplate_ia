@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -e  # Faz o script parar em caso de erro
+set -e
 
 echo "Starting service..."
 
@@ -10,20 +10,12 @@ python manage.py makemigrations || { echo 'Makemigrations failed' ; exit 1; }
 echo "Running migrate..."
 python manage.py migrate || { echo 'Migration failed' ; exit 1; }
 
-echo "Creating superuser..."
-python manage.py shell << END
-from django.contrib.auth import get_user_model
-import os
-
-User = get_user_model()
-username = 'autovist@@@@2024'
-password = '2024@@@@autovist'
-if not User.objects.filter(username=username).exists():
-    User.objects.create_superuser(username=username, email='', password=password)
-    print("Superuser created successfully.")
-else:
-    print("Superuser already exists.")
-END
-
 echo "Starting server..."
-exec python manage.py runserver 0.0.0.0:8000
+gunicorn \
+    --workers 6 \
+    --threads 8 \
+    --max-requests 80000 \
+    --timeout 120 \
+    --keep-alive 5 \
+    config.wsgi:application \
+    --bind 0.0.0.0:8000

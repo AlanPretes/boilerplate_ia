@@ -1,7 +1,9 @@
-import os
 import logging
+import os
+
 from django.apps import AppConfig
 from ultralytics import YOLO
+
 
 logger = logging.getLogger(__name__)
 

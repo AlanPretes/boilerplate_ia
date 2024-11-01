@@ -1,16 +1,13 @@
-import cv2
-import numpy as np
 import io
-import base64
-import cv2
-from PIL import Image
-from abc import ABC, abstractmethod
-from io import BytesIO
-from PIL import Image
-from django.core.files import File
-import uuid
-from django.conf import settings
 import os
+import base64
+from abc import ABC, abstractmethod
+
+import cv2
+from django.conf import settings
+from PIL import Image
+from PIL import Image
+
 
 def plot_boxes(image, box, label=None, confidence=None):
     x1, y1, x2, y2 = map(int, box)

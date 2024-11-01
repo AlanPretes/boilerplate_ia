@@ -1,27 +1,22 @@
+import os
 from datetime import datetime
+
+import requests
 from django.shortcuts import render, redirect
 from django.urls import reverse
-from django.apps import apps  # Para acessar os modelos carregados globalmente
+from django.apps import apps
 from django.core.files.base import ContentFile
-import base64
-import requests
-import os
-from .models import PanelModel
-from .utils import PanelAlerts
 from django.contrib.auth.decorators import login_required
-import tempfile
-import zipfile
-from django.http import HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+from urllib.parse import urlparse
+
+from panel.models import PanelModel
+from panel.utils import PanelAlerts
+
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from django.views.decorators.csrf import csrf_exempt
-from django.utils import timezone
-from django.db.models import Count, Sum
-from PIL import Image
-from io import BytesIO
-from urllib.parse import urlparse
 
 
 @login_required
@@ -45,10 +40,6 @@ def new(request):
         
 
         for file in files:
-            file_extension = os.path.splitext(file.name)[0]  # Manter a extensão original
-            # identifier = file_extension
-            # plate = file_extension
-            
             new_panel = PanelModel(
                 identifier=str(identifier),
                 runtime=0.0

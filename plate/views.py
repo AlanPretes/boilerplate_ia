@@ -1,29 +1,26 @@
+import os
+import tempfile
 from datetime import datetime
+
+import requests
 from django.shortcuts import render, redirect
 from django.urls import reverse
-from django.apps import apps  # Para acessar os modelos carregados globalmente
-from django.core.files.base import ContentFile
-import base64
-import requests
-import os
-from .models import PlateModel
-from .utils import PlateRecognitionModel
+from django.apps import apps 
 from django.contrib.auth.decorators import login_required
-import tempfile
-import zipfile
-from django.http import HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
+
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from django.views.decorators.csrf import csrf_exempt
-from django.utils import timezone
-from django.db.models import Count, Sum
+
+from plate.models import PlateModel
+from plate.utils import PlateRecognitionModel
 
 
 @login_required
 def index(request):
-    # Busca todos os registros da tabela PlateModel, ordenando pelo mais recente
     logs = PlateModel.objects.all().order_by('-id')
 
     context = {
@@ -41,10 +38,6 @@ def new(request):
         files = request.FILES.getlist('file')  # Obter todos os arquivos        
 
         for file in files:
-            file_extension = os.path.splitext(file.name)[0]  # Manter a extensão original
-            # identifier = file_extension
-            # plate = file_extension
-            
             new_plate = PlateModel(
                 identifier=str(identifier),
                 plate=str(plate),
@@ -116,91 +109,8 @@ def generate_yolo_txt(plate_model, label_type):
 
     return "\n".join(lines)
 
-# def download_yolo_txt(request):
-#     with tempfile.TemporaryDirectory() as temp_dir:
-#         try:
-#             unrecognized_dir = os.path.join(temp_dir, 'nao_reconhecido')
-#             os.makedirs(unrecognized_dir, exist_ok=True)
 
-#             matched_plates = PlateModel.objects.filter(match=True)
-            
-#             for plate in matched_plates:
-#                 product_dir = os.path.join(temp_dir, plate.product)
-#                 images_dir = os.path.join(product_dir, 'images')
-#                 labels_dir = os.path.join(product_dir, 'labels')
-
-#                 os.makedirs(images_dir, exist_ok=True)
-#                 os.makedirs(labels_dir, exist_ok=True)
-
-#                 # Salvar as imagens top e bottom na pasta images
-#                 if plate.img_top:
-#                     img_top_path = os.path.join(images_dir, f"{str(plate.img_top).split('/')[-1]}")
-#                     with plate.img_top.open("rb") as img_file, open(img_top_path, "wb") as out_file:
-#                         out_file.write(img_file.read())
-
-#                 if plate.img_bottom:
-#                     img_bottom_path = os.path.join(images_dir, f"{str(plate.img_bottom).split('/')[-1]}")
-#                     with plate.img_bottom.open("rb") as img_file, open(img_bottom_path, "wb") as out_file:
-#                         out_file.write(img_file.read())
-
-#                 # Gerar e salvar os arquivos txt para top e bottom na pasta labels
-#                 try:
-#                     if plate.labels_top:
-#                         txt_top_content = generate_yolo_txt(plate, 'top')
-#                         name = str(plate.img_top).split('/')[-1]
-#                         name = name.split(".")[0]
-#                         txt_top_filename = f"{name}.txt"
-#                         txt_top_filepath = os.path.join(labels_dir, txt_top_filename)
-                        
-#                         with open(txt_top_filepath, "w") as txt_file:
-#                             txt_file.write(txt_top_content)
-
-#                     if plate.labels_bottom:
-#                         txt_bottom_content = generate_yolo_txt(plate, 'bottom')
-#                         name = str(plate.img_bottom).split('/')[-1]
-#                         name = name.split(".")[0]
-#                         txt_bottom_filename = f"{name}.txt"
-#                         txt_bottom_filepath = os.path.join(labels_dir, txt_bottom_filename)
-                        
-#                         with open(txt_bottom_filepath, "w") as txt_file:
-#                             txt_file.write(txt_bottom_content)
-#                 except:
-#                     continue
-
-#             unmatched_plates = PlateModel.objects.filter(match=False)
-#             for unmatched_plate in unmatched_plates:
-#                 # Se o produto não foi reconhecido, salve as imagens na pasta 'nao_reconhecido'
-#                 if str(unmatched_plate.product) == 'Produto não reconhecido' or str(unmatched_plate.result) == 'Placa não reconhecida':
-#                     unrecognized_image_path = os.path.join(unrecognized_dir, f"{unmatched_plate.identifier}_{unmatched_plate.plate}.jpg")
-#                     with unmatched_plate.plate_image.open('rb') as img_file, open(unrecognized_image_path, 'wb') as out_file:
-#                         out_file.write(img_file.read())
-            
-#             # Crie um arquivo .zip contendo as pastas organizadas por tipo de produto
-#             zip_filename = "yolo_files.zip"
-#             zip_filepath = os.path.join(temp_dir, zip_filename)
-
-#             with zipfile.ZipFile(zip_filepath, 'w') as zip_file:
-#                 for root, dirs, files in os.walk(temp_dir):
-#                     for file in files:
-#                         if file != zip_filename:
-#                             arcname = os.path.relpath(os.path.join(root, file), temp_dir)
-#                             zip_file.write(os.path.join(root, file), arcname=arcname)
-
-#             # Envie o arquivo .zip como resposta para download
-#             with open(zip_filepath, 'rb') as zip_file:
-#                 response = HttpResponse(zip_file.read(), content_type='application/zip')
-#                 response['Content-Disposition'] = f'attachment; filename={zip_filename}'
-#                 return response
-#         finally:
-#             # Limpar o diretório temporário
-#             for root, dirs, files in os.walk(temp_dir, topdown=False):
-#                 for name in files:
-#                     os.remove(os.path.join(root, name))
-#                 for name in dirs:
-#                     os.rmdir(os.path.join(root, name))
-#             os.rmdir(temp_dir)
-
-@csrf_exempt  # Desativa CSRF para esta view
+@csrf_exempt 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def new_plate_api(request):

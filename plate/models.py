@@ -1,5 +1,7 @@
-from django.db import models
 import os
+
+from django.db import models
+
 
 def upload_to_plate(instance, filename):
     # Extrai a extensão do arquivo
