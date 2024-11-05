@@ -339,7 +339,6 @@ class PlateRecognitionModel(BaseModel):
                                 plate, labels_top, labels_bottom = plate_old_car_135_315(product, image)
                                 plate = self.transform_plate(plate, product)
 
-
             else:
                 results_recorte_placa = self.model_crop_moto(image_path)
                 image, product = self.get_closest_items(image_path, results_recorte_placa)
