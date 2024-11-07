@@ -96,24 +96,29 @@ class PlateRecognitionModel(BaseModel):
         for result in results:
             for bbox in result.boxes:
                 if bbox.cls in [2, 3]:  # Classe 2 para "car" e classe 3 para "motorcycle" no dataset COCO
+                    # Verificar se a confiança é maior que 90%
+                    if bbox.conf < 0.9:  # Confiança mínima de 90%
+                        continue
+                    
                     # Obter coordenadas da caixa delimitadora
                     x1, y1, x2, y2 = bbox.xyxy[0].cpu().numpy()
                     # Calcular o centro da caixa delimitadora
                     box_center_x = (x1 + x2) / 2
                     box_center_y = (y1 + y2) / 2
-                    
+
                     # Calcular a distância do centro da caixa até o centro da imagem
                     distance_to_center = np.sqrt((box_center_x - center_x) ** 2 + (box_center_y - center_y) ** 2)
-                    
+
                     # Verificar se essa caixa é a mais próxima do centro até agora
                     if distance_to_center < closest_distance:
                         closest_distance = distance_to_center
                         if bbox.cls == 2:
                             vehicle_type = "car"
-                        if bbox.cls == 3:
+                        elif bbox.cls == 3:
                             vehicle_type = "motorcycle"
 
         return vehicle_type if vehicle_type else "Nenhum veículo foi detectado"
+
 
 
     
@@ -304,6 +309,7 @@ class PlateRecognitionModel(BaseModel):
 
         try:
             type_vehicle = self.model_type_vehicle(image_path)
+                        
             results_type_vehicle = self.type_vehicles(image_path, type_vehicle)
             print(results_type_vehicle)
             
