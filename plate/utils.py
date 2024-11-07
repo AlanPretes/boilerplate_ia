@@ -273,7 +273,7 @@ class PlateRecognitionModel(BaseModel):
         def get_plate(results_letras_placa, image, product, local) -> dict:
             if product is None:
                 product = ""
-                
+            
             labels = []
             if product in ['New Moto', 'Old Moto']:
                 min_height_percent = 30
@@ -292,8 +292,8 @@ class PlateRecognitionModel(BaseModel):
                 height = y2 - y1
                 height_percent = (height / image_height) * 100
 
-                if height_percent >= min_height_percent and conf > 0.60:
-                    detections.append((class_name, (x1 + x2) / 2, x1, y1, x2, y2))
+                if height_percent >= min_height_percent and conf > 0.10:
+                    detections.append((class_name, conf, x1, y1, x2, y2))
                     # Salva as coordenadas no formato YOLO: [class, x_center, y_center, width, height]
                     x_center = ((x1 + x2) / 2) / image_width
                     y_center = ((y1 + y2) / 2) / image_height
@@ -301,11 +301,36 @@ class PlateRecognitionModel(BaseModel):
                     height = (y2 - y1) / image_height
                     labels.append([int(cls), x_center, y_center, width, height])
 
-            ordered_detections_by_x = sorted(detections, key=lambda x: x[1])
+            # Filtrar sobreposições: manter apenas a detecção com maior accuracy
+            filtered_detections = []
+            for i, (class_name_i, conf_i, x1_i, y1_i, x2_i, y2_i) in enumerate(detections):
+                is_max_conf = True
+                for j, (class_name_j, conf_j, x1_j, y1_j, x2_j, y2_j) in enumerate(detections):
+                    if i != j:
+                        # Calcula a área de sobreposição
+                        x_overlap = max(0, min(x2_i, x2_j) - max(x1_i, x1_j))
+                        y_overlap = max(0, min(y2_i, y2_j) - max(y1_i, y1_j))
+                        overlap_area = x_overlap * y_overlap
+                        
+                        # Calcula a área da caixa atual
+                        box_area_i = (x2_i - x1_i) * (y2_i - y1_i)
+                        overlap_percent = (overlap_area / box_area_i) * 100 if box_area_i > 0 else 0
+
+                        # Verifica se a sobreposição é maior que 30% e se a detecção atual tem menor confidence
+                        if overlap_percent > 30 and conf_i < conf_j:
+                            is_max_conf = False
+                            break
+
+                if is_max_conf:
+                    filtered_detections.append((class_name_i, (x1_i + x2_i) / 2, x1_i, y1_i, x2_i, y2_i))
+
+            # Ordena as detecções filtradas pela posição horizontal (x) e monta a placa
+            ordered_detections_by_x = sorted(filtered_detections, key=lambda x: x[1])
             digits = [str(int(c[0])) if c[0].isnumeric() else c[0] for c in ordered_detections_by_x]
             plate = ''.join(digits)
 
             return {'plate': plate, 'labels': labels}
+
 
         try:
             type_vehicle = self.model_type_vehicle(image_path)
