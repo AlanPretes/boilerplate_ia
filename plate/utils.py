@@ -266,6 +266,9 @@ class PlateRecognitionModel(BaseModel):
             return plate, top_labels['labels'], bottom_labels['labels']
 
         def get_plate(results_letras_placa, image, product, local) -> dict:
+            if product is None:
+                product = ""
+                
             labels = []
             if product in ['New Moto', 'Old Moto']:
                 min_height_percent = 30
@@ -284,7 +287,7 @@ class PlateRecognitionModel(BaseModel):
                 height = y2 - y1
                 height_percent = (height / image_height) * 100
 
-                if height_percent >= min_height_percent and conf > 0.40:
+                if height_percent >= min_height_percent and conf > 0.60:
                     detections.append((class_name, (x1 + x2) / 2, x1, y1, x2, y2))
                     # Salva as coordenadas no formato YOLO: [class, x_center, y_center, width, height]
                     x_center = ((x1 + x2) / 2) / image_width
@@ -304,7 +307,7 @@ class PlateRecognitionModel(BaseModel):
             results_type_vehicle = self.type_vehicles(image_path, type_vehicle)
             print(results_type_vehicle)
             
-            if results_type_vehicle == "car":
+            if product == "New Car" or product == "Old Car":
                 results_angle_car = self.model_angle_car(image_path)
                 class_names = self.model_angle_car.names
                 for result in results_angle_car:
@@ -358,8 +361,6 @@ class PlateRecognitionModel(BaseModel):
                 "type_vehicle": results_type_vehicle if results_type_vehicle else "Tipo não reconhecido",
                 "angle": class_name or "Não aplicável",
                 "result": plate or "Placa não reconhecida",
-                "thumb_top": thumb_top if thumb_top else None,
-                "thumb_bottom": thumb_bottom if "Moto" in product else None,
                 "product": product if product else None,
                 "labels_top": labels_top if "Moto" in product else None,  # Retorna as coordenadas da parte superior para motos
                 "labels_bottom": labels_bottom if "Moto" in product else None  # Retorna as coordenadas da parte inferior para motos
