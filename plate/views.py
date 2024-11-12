@@ -1,6 +1,7 @@
 import os
 import tempfile
 from datetime import datetime
+from PIL import Image
 
 import requests
 from django.shortcuts import render, redirect
@@ -72,6 +73,13 @@ def new(request):
 
             # Faz a predição usando o caminho da imagem salva
             result = plate_recognition_model.predict(image_path)
+            
+            if result.get('result') != plate and result.get('product') in ['New Moto', 'Old Moto']:
+                image = Image.open(image_path)
+                rotated_image = image.rotate(-12, expand=True)  # Use -12 para girar em sentido horário
+                rotated_image.save(image_path)
+                result = plate_recognition_model.predict(image_path)
+                
 
             # Associa o resultado ao modelo PlateModel
             new_plate.type_vehicle = result.get('type_vehicle')
@@ -148,6 +156,12 @@ def new_plate_api(request):
 
     # Faz a predição usando o caminho da imagem salva
     result = plate_recognition_model.predict(image_path)
+    
+    if result.get('result') != plate and result.get('product') in ['New Moto', 'Old Moto']:
+        image = Image.open(image_path)
+        rotated_image = image.rotate(-12, expand=True)  # Use -12 para girar em sentido horário
+        rotated_image.save(image_path)
+        result = plate_recognition_model.predict(image_path)
     
     new_plate.type_vehicle = result.get('type_vehicle')
     new_plate.angle = result.get('angle')
