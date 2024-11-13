@@ -1,19 +1,36 @@
-<nav aria-label="Page navigation example">
-    <div class="text-center">
-        <ul class="pagination d-flex justify-content-center">
-            {% if prev %}
-                <li class="page-item"><a class="page-link" href="?page={{prev}}">Anterior</a></li>
-            {% else %}
-                <li class="page-item"><a class="page-link disabled">Anterior</a></li>
-            {% endif %}
+<nav class="text-center">
+    <ul class="pagination justify-content-center">
+        {% if itenspage.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page={{ 1 }}">Primeira</a></li>
 
-            
-            {% if next %}
-                <li class="page-item"><a class="page-link" href="?page={{next}}">Próxima</a></li>
-            {% else %}
-                <li class="page-item"><a class="page-link disabled">Próxima</a></li>
-            {% endif %}
-        </ul>
-        <p>Página {{page}} de {{pages}} - {{ total }} itens encontrados</p>
-    </div>
+            {% for num_page in "-5 -4 -3 -2 -1" %}
+                {% if itenspage.number|add:num_page|int > 1 %}
+                    <li class="page-item"><a class="page-link" href="?page={{ itenspage.number|add:num_page|int }}">{{ itenspage.number|add:num_page|int }}</a></li>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+
+        <li class="page-item active"><a class="page-link disabled" href="#">{{ itenspage.number }}</a></li>
+
+        {% if itenspage.has_next %}
+            {% for num_page in "1 2 3 4 5" %}
+                {% if itenspage.number|add:num_page|int < itenspage.paginator.num_pages %}
+                    <li class="page-item"><a class="page-link" href="?page={{ itenspage.number|add:num_page|int }}">{{ itenspage.number|add:num_page|int }}</a></li>
+                {% endif %}
+            {% endfor %}
+
+            <li class="page-item"><a class="page-link" href="?page={{ itenspage.paginator.num_pages }}">Última</a></li>
+        {% endif %}
+    </ul>
+</nav>
+<nav class="text-center">
+    <ul class="pagination justify-content-center">
+        <div class="row">
+            <div class="col">
+            <span class="current">
+                Página {{ itenspage.number }} de {{ itenspage.paginator.num_pages }}. Itens encontrados {{ itenspage.paginator.count }}. Itens nessa página {{ itenspage.object_list|length }}.
+            </span>
+            </div>
+        </div>
+    </ul>
 </nav>
