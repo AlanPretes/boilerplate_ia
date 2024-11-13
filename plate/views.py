@@ -10,7 +10,7 @@ from django.apps import apps
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
-from django.core.pagination import Paginator
+from django.core.paginator import Paginator
 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
